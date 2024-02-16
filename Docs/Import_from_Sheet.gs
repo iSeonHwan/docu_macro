@@ -2,7 +2,7 @@ function ImportDataFromSheet() {
   
   // Google Sheets 데이터 가져오기
   // 메서드를 사용하여 스프레드시트 ID를 기준으로 스프레드시트를 엽니다.
-  var sheet = SpreadsheetApp.openById('11bldxPQ7agyw_tqnSS4ywyNkIzQRHCI94s16Vbf3txI');
+  var sheet = SpreadsheetApp.openById('sheet id');
 
   //메서드를 사용하여 데이터를 가져올 범위를 선택합니다.
   var range = sheet.getRange('B2:B19');
