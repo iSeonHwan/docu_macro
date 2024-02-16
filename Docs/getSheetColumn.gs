@@ -16,6 +16,6 @@ function getSheetColumn(sheet, column) {
 }
 
 // 예시: A열 내용을 Google Docs로 가져오기
-var sheet =SpreadsheetApp.openById('11bldxPQ7agyw_tqnSS4ywyNkIzQRHCI94s16Vbf3txI');
+var sheet =SpreadsheetApp.openById('sheet id ');
 var column = 1;
 getSheetColumn(sheet, column);
