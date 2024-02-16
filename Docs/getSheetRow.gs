@@ -12,6 +12,6 @@ function getSheetRow(sheet, row) {
 }
 
 // 예시: 2행 내용을 Google Docs로 가져오기
-var sheet =SpreadsheetApp.openById('11bldxPQ7agyw_tqnSS4ywyNkIzQRHCI94s16Vbf3txI');
+var sheet =SpreadsheetApp.openById('sheet id');
 var row = 2;
 getSheetRow(sheet, row);
