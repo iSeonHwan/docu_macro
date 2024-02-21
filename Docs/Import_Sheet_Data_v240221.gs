@@ -2,7 +2,7 @@
 
 function importSheetData() {
   // 시트 ID 및 범위 입력
-  var sheetId = '11bldxPQ7agyw_tqnSS4ywyNkIzQRHCI94s16Vbf3txI';
+  var sheetId = '0000';
 
   // 시트 열기
   var sheet = SpreadsheetApp.openById(sheetId);
