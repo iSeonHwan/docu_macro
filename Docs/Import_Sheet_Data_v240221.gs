@@ -24,7 +24,7 @@ function importSheetData() {
   //Logger.log( data[data.length][0]); //오류 발생: TypeError: Cannot read properties of undefined
 
   //데이터의 행의 길이 수를 구함.
-  var dataRow = data.length - 1;
+  var dataRow = data.length;
   Logger.log('데이터 행의 수:'+dataRow);
   
   //데이터의 열의 길이 수를 구함.
@@ -41,21 +41,21 @@ function importSheetData() {
   }
  */
 
-  //항목별로, 학생별로 정보를 가져와 정리한다.
+  //항목별로, 학생별로 정보를 가져와 정리한다. 첫 번째 행열은 필요없으므로 생략한다. 그러므로 0부터가 아닌, 1부터 시작하자.
   for(var j = 1; j < dataRow; j++){
     for (var i = 1; i < dataCol; i++){
+      try{
+        doc.appendParagraph(data[0][i]);
+        doc.appendParagraph(data[j][i]);
+      } catch(error){
 
-    doc.appendParagraph(data[0][i]);
-
-    try{
-    doc.appendParagraph(data[j][i]);
-    } catch(error){
-      Logger.log(error)
-    }
+      }
+    //구분을 위한 줄 바꿈.
     doc.appendParagraph('\n');
     
     }
+  //학생별로 페이지를 나눈다.
+  doc.appendPageBreak();
   }
 
 }
-
