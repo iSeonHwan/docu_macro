@@ -40,10 +40,14 @@ function importSheetData() {
     for (var i = 1; i < dataCol; i++){
       try{
         //질문을 넣는다.
-        doc.appendParagraph(data[0][i]);
+        var text1 = doc.appendParagraph(data[0][i]);
+        //질문을 개요6으로 설정함.
+        text1.setHeading(DocumentApp.ParagraphHeading.HEADING6);
 
         //응답을 넣는다.
-        doc.appendParagraph(data[j][i]);
+        var text2 = doc.appendParagraph(data[j][i]);
+        //응답을 본문으로 설정함.
+        text2.setHeading(DocumentApp.ParagraphHeading.NORMAL);
       } catch(error){
 
       }
