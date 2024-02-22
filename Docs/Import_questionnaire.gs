@@ -17,15 +17,6 @@ function importSheetData() {
   // 데이터 가져오기
   var data = sheet.getDataRange().getValues();
 
-  // 데이터 추가
-
-  // Logger.log()를 사용하여 data 배열 전체를 콘솔에 출력
-  //Logger.log(data);
-
-  //data의 길이 출력
-
-  //Logger.log(data.length);
-  //Logger.log( data[data.length][0]); //오류 발생: TypeError: Cannot read properties of undefined
 
   //데이터의 행의 길이 수를 구함.
   var dataRow = data.length;
