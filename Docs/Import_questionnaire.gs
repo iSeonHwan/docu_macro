@@ -17,7 +17,6 @@ function importSheetData() {
   // 데이터 가져오기
   var data = sheet.getDataRange().getValues();
 
-
   //데이터의 행의 길이 수를 구함.
   var dataRow = data.length;
   Logger.log('데이터 행의 수:'+dataRow);
@@ -28,17 +27,22 @@ function importSheetData() {
 
   //항목별로, 학생별로 정보를 가져와 정리한다. 첫 번째 행열은 필요없으므로 생략한다. 그러므로 0부터가 아닌, 1부터 시작하자.
   for(var j = 1; j < dataRow; j++){
+    
+    //응답자 별로 제목을 넣는다.
+    var text1 = doc.appendParagraph( j + '번째 응답');
+    text1.setHeading(DocumentApp.ParagraphHeading.TITLE);
+
     for (var i = 1; i < dataCol; i++){
       try{
         //질문을 넣는다.
-        var text1 = doc.appendParagraph(data[0][i]);
+        var text2 = doc.appendParagraph(data[0][i]);
         //질문을 개요6으로 설정함.
-        text1.setHeading(DocumentApp.ParagraphHeading.HEADING6);
+        text2.setHeading(DocumentApp.ParagraphHeading.HEADING6);
 
         //응답을 넣는다.
-        var text2 = doc.appendParagraph(data[j][i]);
+        var text3 = doc.appendParagraph(data[j][i]);
         //응답을 본문으로 설정함.
-        text2.setHeading(DocumentApp.ParagraphHeading.NORMAL);
+        text3.setHeading(DocumentApp.ParagraphHeading.NORMAL);
       } catch(error){
 
       }
