@@ -6,6 +6,14 @@ Sub SplitDocumentByCustomHeading()
     Dim i As Integer
     Dim path As String
     Dim headingStyle As String
+    Dim headingText As String
+    Dim timestamp As String
+    Dim fileName As String
+    Dim styleExists As Boolean
+    Dim firstPart As Boolean
+    
+    ' Set the active document
+    Set doc = ActiveDocument
     
     headingStyle = InputBox("Enter the style name to split the document by (e.g., Heading 1):", "Enter Style Name")
     
@@ -14,37 +22,127 @@ Sub SplitDocumentByCustomHeading()
         Exit Sub
     End If
     
-    Set doc = ActiveDocument
+    ' Check if the entered style name exists in the document
+    styleExists = False
+    For i = 1 To doc.Styles.Count
+        If doc.Styles(i).NameLocal = headingStyle Then
+            styleExists = True
+            Exit For
+        End If
+    Next i
+    
+    If Not styleExists Then
+        MsgBox "The style name '" & headingStyle & "' does not exist in the document. Operation cancelled."
+        Exit Sub
+    End If
+    
     path = doc.Path & "\"
-
+    
     ' Initialize counter
     i = 1
-
+    firstPart = True
+    
     ' Loop through each paragraph in the document
     For Each para In doc.Paragraphs
         If para.Style = headingStyle Then
-            ' Create a new document for each instance of the specified heading style
-            If Not part Is Nothing Then
-                part.SaveAs2 FileName:=path & "Part" & i & ".docx"
-                part.Close
+            If Not firstPart Then
+                ' Save the current part before creating a new document
+                headingText = prevHeadingText
+                headingText = CleanString(headingText)
+                headingText = Trim(headingText)
+                
+                ' Ensure the heading text is not empty
+                If headingText = "" Then
+                    headingText = "Untitled"
+                End If
+                
+                ' Limit the file name length to 30 characters
+                If Len(headingText) > 30 Then
+                    headingText = Left(headingText, 30)
+                End If
+                
+                ' Add a timestamp to ensure the filename is unique
+                timestamp = Format(Now, "yyyymmdd_hhnnss")
+                
+                ' Combine the cleaned heading text and timestamp to form the filename
+                fileName = path & headingText & "_" & timestamp & ".docx"
+                
+                ' Check if the fileName is valid
+                If Len(fileName) <= 255 Then
+                    part.SaveAs2 FileName:=fileName, FileFormat:=wdFormatXMLDocument
+                    part.Close False
+                Else
+                    MsgBox "File name is too long: " & fileName
+                End If
                 i = i + 1
+                
+                ' Start a new document for the next part
+                Set part = Documents.Add
+                Set rng = part.Range
+            Else
+                ' Create the first document
+                Set part = Documents.Add
+                Set rng = part.Range
+                firstPart = False
             End If
-            Set part = Documents.Add
-            Set rng = part.Range
+            
+            ' Store the current heading text
+            prevHeadingText = para.Range.Text
         End If
+        
+        ' Copy paragraph to new document
         If Not part Is Nothing Then
-            ' Copy paragraph to new document
             para.Range.Copy
             rng.Collapse wdCollapseEnd
             rng.Paste
+            rng.Collapse wdCollapseEnd
         End If
     Next para
-
+    
     ' Save and close the last part
     If Not part Is Nothing Then
-        part.SaveAs2 FileName:=path & "Part" & i & ".docx"
-        part.Close
+        headingText = prevHeadingText
+        headingText = CleanString(headingText)
+        headingText = Trim(headingText)
+        
+        ' Ensure the heading text is not empty
+        If headingText = "" Then
+            headingText = "Untitled"
+        End If
+        
+        ' Limit the file name length to 30 characters
+        If Len(headingText) > 30 Then
+            headingText = Left(headingText, 30)
+        End If
+        
+        ' Add a timestamp to ensure the filename is unique
+        timestamp = Format(Now, "yyyymmdd_hhnnss")
+        
+        ' Combine the cleaned heading text and timestamp to form the filename
+        fileName = path & headingText & "_" & timestamp & ".docx"
+        
+        ' Check if the fileName is valid
+        If Len(fileName) <= 255 Then
+            part.SaveAs2 FileName:=fileName, FileFormat:=wdFormatXMLDocument
+            part.Close False
+        Else
+            MsgBox "File name is too long: " & fileName
+        End If
     End If
-
+    
     MsgBox "Document has been split and saved based on the style: " & headingStyle
 End Sub
+
+Function CleanString(str As String) As String
+    ' Function to replace invalid characters with underscore
+    Dim invalidChars As Variant
+    Dim i As Integer
+    
+    invalidChars = Array("\", "/", ":", "*", "?", """", "<", ">", "|", Chr(9), Chr(10), Chr(13))
+    
+    For i = LBound(invalidChars) To UBound(invalidChars)
+        str = Replace(str, invalidChars(i), "_")
+    Next i
+    
+    CleanString = str
+End Function
