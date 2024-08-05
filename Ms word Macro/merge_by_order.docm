@@ -1,0 +1,126 @@
+Sub MergeWordFilesToExistingDocument()
+    Dim mainDoc As Document
+    Dim tempDoc As Document
+    Dim fileDialog As FileDialog
+    Dim folderPath As String
+    Dim fileName As String
+    Dim filePath As String
+    Dim rng As Range
+    Dim fso As Object
+    Dim folder As Object
+    Dim file As Object
+    Dim saveDialog As FileDialog
+    Dim fileList() As String
+    Dim fileCount As Integer
+    Dim i As Integer, j As Integer
+    Dim temp As String
+
+    ' Use FileDialog to select the existing document to append to
+    Set fileDialog = Application.FileDialog(msoFileDialogFilePicker)
+    With fileDialog
+        .Title = "Select the existing document to append to"
+        .Filters.Clear
+        .Filters.Add "Word Files", "*.docx"
+        If .Show = -1 Then
+            filePath = .SelectedItems(1)
+            Set mainDoc = Documents.Open(filePath)
+        Else
+            MsgBox "No file selected. Operation cancelled."
+            Exit Sub
+        End If
+    End With
+
+    ' Use FileDialog to select the folder containing the Word files to be merged
+    Set fileDialog = Application.FileDialog(msoFileDialogFolderPicker)
+    With fileDialog
+        .Title = "Select the folder containing Word files to merge"
+        If .Show = -1 Then
+            folderPath = .SelectedItems(1)
+        Else
+            MsgBox "No folder selected. Operation cancelled."
+            mainDoc.Close False
+            Exit Sub
+        End If
+    End With
+
+    ' Get all .docx files in the selected folder
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set folder = fso.GetFolder(folderPath)
+
+    ' Store file names in an array
+    fileCount = 0
+    For Each file In folder.Files
+        If LCase(fso.GetExtensionName(file.Name)) = "docx" Then
+            fileCount = fileCount + 1
+            ReDim Preserve fileList(1 To fileCount)
+            fileList(fileCount) = file.Name
+        End If
+    Next file
+
+    ' Sort the file list array using natural sort order
+    Call NaturalSort(fileList)
+
+    ' Merge files in sorted order to the existing document
+    For i = 1 To fileCount
+        filePath = folderPath & "\" & fileList(i)
+        ' Open each file and copy its content to the main document
+        Set tempDoc = Documents.Open(filePath)
+        Set rng = tempDoc.Range
+        rng.Copy
+        mainDoc.Range(mainDoc.Content.End - 1).Paste
+        ' Add a page break after each document's content
+        mainDoc.Range(mainDoc.Content.End - 1).InsertBreak Type:=wdPageBreak
+        tempDoc.Close False
+    Next i
+
+    ' Save the merged document
+    mainDoc.Save
+    mainDoc.Close
+    MsgBox "Documents have been merged and saved to the existing document."
+End Sub
+
+Sub NaturalSort(arr() As String)
+    Dim i As Integer, j As Integer
+    Dim temp As String
+    Dim tempI As Integer, tempJ As Integer
+    Dim s1 As String, s2 As String
+    Dim n1 As Long, n2 As Long
+    Dim re As Object
+    Set re = CreateObject("VBScript.RegExp")
+    re.Global = True
+    re.Pattern = "(\d+)|(\D+)"
+    For i = LBound(arr) To UBound(arr) - 1
+        For j = i + 1 To UBound(arr)
+            s1 = arr(i)
+            s2 = arr(j)
+            Set matches1 = re.Execute(s1)
+            Set matches2 = re.Execute(s2)
+            For tempI = 0 To matches1.Count - 1
+                If tempI > matches2.Count - 1 Then Exit For
+                If IsNumeric(matches1(tempI)) Then
+                    n1 = CLng(matches1(tempI))
+                    If IsNumeric(matches2(tempI)) Then
+                        n2 = CLng(matches2(tempI))
+                        If n1 <> n2 Then
+                            If n1 > n2 Then
+                                temp = arr(i)
+                                arr(i) = arr(j)
+                                arr(j) = temp
+                            End If
+                            Exit For
+                        End If
+                    Else
+                        Exit For
+                    End If
+                ElseIf matches1(tempI) <> matches2(tempI) Then
+                    If matches1(tempI) > matches2(tempI) Then
+                        temp = arr(i)
+                        arr(i) = arr(j)
+                        arr(j) = temp
+                    End If
+                    Exit For
+                End If
+            Next tempI
+        Next j
+    Next i
+End Sub
