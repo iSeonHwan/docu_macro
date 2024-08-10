@@ -1,126 +1,87 @@
-Sub MergeWordFilesToExistingDocument()
-    Dim mainDoc As Document
-    Dim tempDoc As Document
-    Dim fileDialog As FileDialog
+Sub OrderAndMergeDocuments()
     Dim folderPath As String
     Dim fileName As String
-    Dim filePath As String
-    Dim rng As Range
-    Dim fso As Object
-    Dim folder As Object
-    Dim file As Object
-    Dim saveDialog As FileDialog
     Dim fileList() As String
-    Dim fileCount As Integer
     Dim i As Integer, j As Integer
     Dim temp As String
+    Dim mainDoc As Document
+    Dim rng As Range
+    Dim fileCount As Integer
+    Dim fileDialog As FileDialog
+    Dim saveDialog As FileDialog
 
-    ' Use FileDialog to select the existing document to append to
-    Set fileDialog = Application.FileDialog(msoFileDialogFilePicker)
+    ' 1. 새 문서를 생성합니다.
+    Set mainDoc = Documents.Add
+
+    ' 2. FileDialog를 사용하여 병합할 워드 파일들이 있는 폴더를 사용자가 지정합니다.
+    Set fileDialog = Application.FileDialog(msoFileDialogFolderPicker)
     With fileDialog
-        .Title = "Select the existing document to append to"
-        .Filters.Clear
-        .Filters.Add "Word Files", "*.docx"
+        .Title = "병합할 Word 파일들이 있는 폴더를 선택하세요."
         If .Show = -1 Then
-            filePath = .SelectedItems(1)
-            Set mainDoc = Documents.Open(filePath)
+            folderPath = .SelectedItems(1)
         Else
-            MsgBox "No file selected. Operation cancelled."
+            MsgBox "폴더를 선택하지 않았습니다.", vbExclamation
             Exit Sub
         End If
     End With
 
-    ' Use FileDialog to select the folder containing the Word files to be merged
-    Set fileDialog = Application.FileDialog(msoFileDialogFolderPicker)
-    With fileDialog
-        .Title = "Select the folder containing Word files to merge"
+    ' 3. 폴더 내 모든 파일의 이름을 배열에 저장하고, 이름을 오름차순으로 정렬합니다.
+    fileName = Dir(folderPath & "\*.docx")
+    fileCount = 0
+
+    Do While fileName <> ""
+        fileCount = fileCount + 1
+        ReDim Preserve fileList(1 To fileCount)
+        fileList(fileCount) = fileName
+        fileName = Dir
+    Loop
+
+    ' 파일이 없을 경우 오류 메시지를 표시하고 종료합니다.
+    If fileCount = 0 Then
+        MsgBox "선택한 폴더에 병합할 파일이 없습니다.", vbExclamation
+        Exit Sub
+    End If
+
+    ' 파일 이름을 오름차순으로 정렬합니다.
+    For i = 1 To UBound(fileList) - 1
+        For j = i + 1 To UBound(fileList)
+            If fileList(i) > fileList(j) Then
+                temp = fileList(i)
+                fileList(i) = fileList(j)
+                fileList(j) = temp
+            End If
+        Next j
+    Next i
+
+    ' 4. 정렬된 파일들을 순서대로 병합합니다.
+    For i = 1 To UBound(fileList)
+        Set rng = mainDoc.Range
+        rng.Collapse Direction:=wdCollapseEnd
+        
+        ' Insert the file while keeping its styles
+        rng.InsertFile FileName:=folderPath & "\" & fileList(i)
+        
+        ' 페이지 구분을 추가합니다.
+        rng.Collapse Direction:=wdCollapseEnd
+        rng.InsertBreak Type:=wdPageBreak
+    Next i
+
+    ' 5. SaveFileDialog를 사용하여 병합된 문서를 사용자가 지정한 위치와 이름으로 저장합니다.
+    Set saveDialog = Application.FileDialog(msoFileDialogSaveAs)
+    With saveDialog
+        .Title = "병합된 문서를 저장할 위치와 이름을 지정하세요."
+        .FilterIndex = 1
         If .Show = -1 Then
-            folderPath = .SelectedItems(1)
+            mainDoc.SaveAs2 FileName:=.SelectedItems(1), FileFormat:=wdFormatXMLDocument
         Else
-            MsgBox "No folder selected. Operation cancelled."
+            MsgBox "저장할 파일을 선택하지 않았습니다.", vbExclamation
             mainDoc.Close False
             Exit Sub
         End If
     End With
 
-    ' Get all .docx files in the selected folder
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    Set folder = fso.GetFolder(folderPath)
-
-    ' Store file names in an array
-    fileCount = 0
-    For Each file In folder.Files
-        If LCase(fso.GetExtensionName(file.Name)) = "docx" Then
-            fileCount = fileCount + 1
-            ReDim Preserve fileList(1 To fileCount)
-            fileList(fileCount) = file.Name
-        End If
-    Next file
-
-    ' Sort the file list array using natural sort order
-    Call NaturalSort(fileList)
-
-    ' Merge files in sorted order to the existing document
-    For i = 1 To fileCount
-        filePath = folderPath & "\" & fileList(i)
-        ' Open each file and copy its content to the main document
-        Set tempDoc = Documents.Open(filePath)
-        Set rng = tempDoc.Range
-        rng.Copy
-        mainDoc.Range(mainDoc.Content.End - 1).Paste
-        ' Add a page break after each document's content
-        mainDoc.Range(mainDoc.Content.End - 1).InsertBreak Type:=wdPageBreak
-        tempDoc.Close False
-    Next i
-
-    ' Save the merged document
-    mainDoc.Save
+    ' 문서 닫기
     mainDoc.Close
-    MsgBox "Documents have been merged and saved to the existing document."
-End Sub
 
-Sub NaturalSort(arr() As String)
-    Dim i As Integer, j As Integer
-    Dim temp As String
-    Dim tempI As Integer, tempJ As Integer
-    Dim s1 As String, s2 As String
-    Dim n1 As Long, n2 As Long
-    Dim re As Object
-    Set re = CreateObject("VBScript.RegExp")
-    re.Global = True
-    re.Pattern = "(\d+)|(\D+)"
-    For i = LBound(arr) To UBound(arr) - 1
-        For j = i + 1 To UBound(arr)
-            s1 = arr(i)
-            s2 = arr(j)
-            Set matches1 = re.Execute(s1)
-            Set matches2 = re.Execute(s2)
-            For tempI = 0 To matches1.Count - 1
-                If tempI > matches2.Count - 1 Then Exit For
-                If IsNumeric(matches1(tempI)) Then
-                    n1 = CLng(matches1(tempI))
-                    If IsNumeric(matches2(tempI)) Then
-                        n2 = CLng(matches2(tempI))
-                        If n1 <> n2 Then
-                            If n1 > n2 Then
-                                temp = arr(i)
-                                arr(i) = arr(j)
-                                arr(j) = temp
-                            End If
-                            Exit For
-                        End If
-                    Else
-                        Exit For
-                    End If
-                ElseIf matches1(tempI) <> matches2(tempI) Then
-                    If matches1(tempI) > matches2(tempI) Then
-                        temp = arr(i)
-                        arr(i) = arr(j)
-                        arr(j) = temp
-                    End If
-                    Exit For
-                End If
-            Next tempI
-        Next j
-    Next i
+    MsgBox "모든 문서가 병합되고 저장되었습니다.", vbInformation
 End Sub
