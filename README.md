@@ -1,7 +1,18 @@
-# Google_App_Script
-App Script for Google doc, sheet, slide...
+# Google_App_Script + Ms Office_Macro
 
-Macro for Ms Office ...
+## App Script for Google office
+
+### google docs
+
+
+### google slide
+
+### google sheets
+
+
+
+## Macro for Ms Office
+
 
 ## reference
 
